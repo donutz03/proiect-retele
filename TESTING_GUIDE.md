@@ -1,8 +1,10 @@
-# News Channel System - Testing Guide with Console Notifications
+# News Channel System - Testing Guide with Console Notifications (TCP, fără autentificare)
+
+kill -9 $(lsof -ti :3333)
 
 ## 🧪 Complete Testing Walkthrough
 
-This guide shows you **exactly** what console output to expect when testing the notification system.
+Acest ghid arată **exact** ce output să aștepți la testarea sistemului de notificări, folosind doar TCP și fără autentificare.
 
 ## Step 1: Start the Server
 
@@ -15,12 +17,10 @@ python server.py
 **Expected Output:**
 
 ```
-Server running on 127.0.0.1:3333
-News Channel Server - Content filtering enabled
-Forbidden words: spam, hack, virus, malware, phishing, scam
+Server running on 127.0.0.1:3333 (TCP)
 ```
 
-## Step 2: Start Client 1 (Alice)
+## Step 2: Start Client 1 (Terminal 1)
 
 **Command:**
 
@@ -31,10 +31,8 @@ python client.py
 **Expected Output:**
 
 ```
-Welcome to the News Channel System!
+Welcome to the News Channel System! (TCP)
 Commands:
-  register <username> <password>
-  login <username> <password>
   list_channels - Show all available channels
   create_channel "<channel name>" "<description>"
   delete_channel "<channel name>"
@@ -43,37 +41,13 @@ Commands:
   publish_news "<channel name>" <news content>
   my_subscriptions - Show your subscriptions
   exit
-
-🔔 Starting notification system on port 12345...
-🔔 Notification listener started on port 12345
 ✅ Notification system ready!
 >
 ```
 
-## Step 3: Register Alice
+## Step 3: Start Client 2 (Terminal 2)
 
-**Alice types:**
-
-```
-register alice password123
-```
-
-**Server Console shows:**
-
-```
-🔄 Received request: register from ('127.0.0.1', 54321)
-📝 Registration attempt: alice -> success
-```
-
-**Alice Console shows:**
-
-```
-Registration successful!
-```
-
-## Step 4: Start Client 2 (Bob)
-
-**Command (new terminal):**
+**Command:**
 
 ```bash
 python client.py
@@ -82,67 +56,48 @@ python client.py
 **Expected Output:**
 
 ```
-🔔 Starting notification system on port 12346...
-🔔 Notification listener started on port 12346
+Welcome to the News Channel System! (TCP)
+Commands:
+  list_channels - Show all available channels
+  create_channel "<channel name>" "<description>"
+  delete_channel "<channel name>"
+  subscribe "<channel name>"
+  unsubscribe "<channel name>"
+  publish_news "<channel name>" <news content>
+  my_subscriptions - Show your subscriptions
+  exit
 ✅ Notification system ready!
 >
 ```
 
-## Step 5: Register and Login Bob
+## Step 4: Test Channel Creation Notification
 
-**Bob types:**
-
-```
-register bob secret456
-login bob secret456
-```
-
-**Server Console shows:**
+**Client 1 types:**
 
 ```
-🔄 Received request: register from ('127.0.0.1', 54322)
-📝 Registration attempt: bob -> success
-🔄 Received request: login from ('127.0.0.1', 54322)
-🔐 Login attempt: bob -> success
-```
-
-## Step 6: Test Channel Creation Notification
-
-**Alice types:**
-
-```
-login alice password123
 create_channel "Tech News" "Latest technology updates"
 ```
 
 **Server Console shows:**
 
 ```
-🔄 Received request: login from ('127.0.0.1', 54321)
-🔐 Login attempt: alice -> success
-🔄 Received request: create_channel from ('127.0.0.1', 54321)
-📺 Channel creation: 'Tech News' by alice -> success
-📢 SENDING NOTIFICATION TO ALL CLIENTS: new_channel
-   ✅ Notified alice at ('127.0.0.1', 12345)
-   ✅ Notified bob at ('127.0.0.1', 12346)
-📊 Total clients notified: 2
-==================================================
+📺 Channel creation: 'Tech News' created by 127.0.0.1:XXXXX -> success
 ```
 
-**Bob's Console shows:**
+**Client 2 Console shows:**
 
 ```
 📨 NOTIFICATION RECEIVED from ('127.0.0.1', 3333): new_channel
 
-🆕 New channel 'Tech News' created by alice
+🆕 New channel 'Tech News' created
    Tech News - Latest technology updates
-   Created by: alice
+   Created by: 127.0.0.1:XXXXX
 >
 ```
 
-## Step 7: Test Subscription
+## Step 5: Test Subscription
 
-**Bob types:**
+**Client 2 types:**
 
 ```
 subscribe "Tech News"
@@ -151,13 +106,12 @@ subscribe "Tech News"
 **Server Console shows:**
 
 ```
-🔄 Received request: subscribe from ('127.0.0.1', 54322)
-➕ Subscription: bob to 'Tech News' -> success
+➕ Subscription: 127.0.0.1:YYYYY to 'Tech News' -> success
 ```
 
-## Step 8: Test News Publishing with Subscriber Notifications
+## Step 6: Test News Publishing with Subscriber Notifications
 
-**Alice types:**
+**Client 1 types:**
 
 ```
 publish_news "Tech News" Breaking: New AI breakthrough announced by researchers!
@@ -166,27 +120,22 @@ publish_news "Tech News" Breaking: New AI breakthrough announced by researchers!
 **Server Console shows:**
 
 ```
-🔄 Received request: publish_news from ('127.0.0.1', 54321)
-📰 News publication: alice to 'Tech News' -> success
-📰 SENDING NEWS TO SUBSCRIBERS of 'Tech News': new_news
-   ✅ Notified subscriber bob at ('127.0.0.1', 12346)
-📊 Total subscribers notified: 1/1
-==================================================
+📰 News publication: 127.0.0.1:XXXXX to 'Tech News' -> success
 ```
 
-**Bob's Console shows:**
+**Client 2 Console shows:**
 
 ```
 📨 NOTIFICATION RECEIVED from ('127.0.0.1', 3333): new_news
 
 📰 New news in channel 'Tech News':
-   [2024-01-15 14:30:25] alice: Breaking: New AI breakthrough announced by researchers!
+   [YYYY-MM-DD HH:MM:SS] 127.0.0.1:XXXXX: Breaking: New AI breakthrough announced by researchers!
 >
 ```
 
-## Step 9: Test Content Filtering
+## Step 7: Test Content Filtering
 
-**Alice types:**
+**Client 1 types:**
 
 ```
 publish_news "Tech News" This news contains spam content that should be blocked
@@ -195,22 +144,20 @@ publish_news "Tech News" This news contains spam content that should be blocked
 **Server Console shows:**
 
 ```
-🔄 Received request: publish_news from ('127.0.0.1', 54321)
-📰 News publication: alice to 'Tech News' -> error
-🚫 Content filtered: 'This news contains spam content that should be bloc...')
+📰 News publication: 127.0.0.1:XXXXX to 'Tech News' -> error
 ```
 
-**Alice's Console shows:**
+**Client 1 Console shows:**
 
 ```
 Failed to publish news: News content contains forbidden words and has been blocked
 ```
 
-**Bob's Console shows:** _(No notification - correctly filtered)_
+**Client 2 Console shows:** _(No notification - correctly filtered)_
 
-## Step 10: Test Channel Deletion
+## Step 8: Test Channel Deletion
 
-**Alice types:**
+**Client 1 types:**
 
 ```
 delete_channel "Tech News"
@@ -219,21 +166,15 @@ delete_channel "Tech News"
 **Server Console shows:**
 
 ```
-🔄 Received request: delete_channel from ('127.0.0.1', 54321)
-🗑️ Channel deletion: 'Tech News' by alice -> success
-📢 SENDING NOTIFICATION TO ALL CLIENTS: channel_deleted
-   ✅ Notified alice at ('127.0.0.1', 12345)
-   ✅ Notified bob at ('127.0.0.1', 12346)
-📊 Total clients notified: 2
-==================================================
+🗑️ Channel deletion: 'Tech News' by 127.0.0.1:XXXXX -> success
 ```
 
-**Bob's Console shows:**
+**Client 2 Console shows:**
 
 ```
 📨 NOTIFICATION RECEIVED from ('127.0.0.1', 3333): channel_deleted
 
-🗑️ Channel 'Tech News' has been deleted by alice
+🗑️ Channel 'Tech News' has been deleted
 >
 ```
 
@@ -241,27 +182,25 @@ delete_channel "Tech News"
 
 ### ✅ Server Console Should Show:
 
-- 📢 All notification broadcasts
-- ✅ Successful notification deliveries
-- 📊 Count of clients/subscribers notified
-- 🚫 Content filtering in action
-- 🔄 All incoming requests
+- Toate notificările trimise (creare/ștergere canal, știri)
+- Succesul notificărilor
+- Toate cererile primite de la clienți
+- Content filtering activ
 
 ### ✅ Client Consoles Should Show:
 
-- 📨 Notification reception confirmations
-- 🆕 New channel notifications (ALL clients)
-- 🗑️ Channel deletion notifications (ALL clients)
-- 📰 News notifications (ONLY subscribers)
-- 🔔 Notification system startup
+- Confirmări de primire notificări
+- Notificări de canal nou/șters (toți clienții)
+- Notificări de știri (doar abonații)
+- Pornirea sistemului de notificări
 
 ### ✅ Verification Points:
 
-1. **Global Notifications**: Channel creation/deletion notifies ALL connected clients
-2. **Subscriber-Only Notifications**: News only goes to subscribers
-3. **Content Filtering**: Forbidden words block news publication
-4. **No Notifications**: Unsubscribed clients don't receive news
-5. **Console Logging**: Clear visibility of all notification activity
+1. **Global Notifications**: Crearea/ștergerea canalului notifică TOȚI clienții
+2. **Subscriber-Only Notifications**: Știrile merg doar la abonați
+3. **Content Filtering**: Cuvintele interzise blochează publicarea
+4. **No Notifications**: Clienții neabonați nu primesc știri
+5. **Console Logging**: Vizibilitate clară a activității de notificare
 
 ## 🚀 Quick Test Commands
 
@@ -271,32 +210,28 @@ delete_channel "Tech News"
 python server.py
 ```
 
-**Terminal 2 (Alice):**
+**Terminal 2 (Client 1):**
 
 ```
-register alice pass123
-login alice pass123
 create_channel "Test Channel" "Testing notifications"
 publish_news "Test Channel" This is a test message
 ```
 
-**Terminal 3 (Bob):**
+**Terminal 3 (Client 2):**
 
 ```
-register bob pass456
-login bob pass456
 subscribe "Test Channel"
 ```
 
-Watch the server console for notification logs and Bob's console for received notifications!
+Urmărește consola serverului pentru loguri de notificare și consola clientului 2 pentru notificări primite!
 
 ## 🔧 Troubleshooting
 
-If notifications aren't working:
+Dacă notificările nu funcționează:
 
-1. Check that notification ports are shown in client startup
-2. Verify server shows "Total clients notified" > 0
-3. Ensure clients show "📨 NOTIFICATION RECEIVED" messages
-4. Try restarting clients if notification thread fails
+1. Verifică dacă portul de notificare este afișat la pornirea clientului
+2. Asigură-te că serverul primește cereri și trimite notificări
+3. Clienții trebuie să afișeze "📨 NOTIFICATION RECEIVED" la primirea notificărilor
+4. Repornește clienții dacă thread-ul de notificare nu pornește
 
-The enhanced system now provides complete visibility into the notification process! 🎉
+Sistemul oferă acum vizibilitate completă pentru notificări, fără autentificare și doar pe TCP! 🎉
