@@ -116,6 +116,9 @@ class Client:
             try:
                 client_socket, addr = self.notification_sock.accept()
                 threading.Thread(target=self.handle_notification, args=(client_socket, addr), daemon=True).start()
+            except OSError as e:
+            # Socket closed intentionally on exit
+                break    
             except Exception as e:
                 print(f"\n❌ Error accepting notification connection: {str(e)}")
                 continue

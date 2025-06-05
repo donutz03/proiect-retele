@@ -1,3 +1,5 @@
+kill -9 $(lsof -ti :3333)
+
 # Manual Test Scenarios for News Channel System
 
 ## 1. Basic Manual Test Scenario
